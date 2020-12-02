@@ -10,7 +10,7 @@
 
 using namespace boost;
 
-xmlParser::IOHandler::IOHandler(const std::string &address, uint32_t port)
+xmlServer::IOHandler::IOHandler(const std::string &address, uint32_t port)
     : ioc_(), endpoint_(asio::ip::address::from_string(address), port), socket_(ioc_, endpoint_.protocol())
 {
     std::cout << "Connecting to " << address << ":" << port << "...\n";
@@ -18,12 +18,12 @@ xmlParser::IOHandler::IOHandler(const std::string &address, uint32_t port)
     std::cout << "Connection established\n";
 }
 
-void xmlParser::IOHandler::addMessageToSend(const std::string &message)
+void xmlServer::IOHandler::addMessageToSend(const std::string &message)
 {
     sendStack_.emplace(message);
 }
 
-std::string xmlParser::IOHandler::readNextMessage()
+std::string xmlServer::IOHandler::readNextMessage()
 {
     std::string ret;
     if (read_(ret))
@@ -39,7 +39,7 @@ std::string xmlParser::IOHandler::readNextMessage()
     }
 }
 
-void xmlParser::IOHandler::writeAllMessages()
+void xmlServer::IOHandler::writeAllMessages()
 {
     while(!sendStack_.empty())
     {
@@ -55,7 +55,7 @@ void xmlParser::IOHandler::writeAllMessages()
     }
 }
 
-std::size_t xmlParser::IOHandler::read_(std::string &message)
+std::size_t xmlServer::IOHandler::read_(std::string &message)
 {
     while(socket_.available() < 30)
     {
@@ -76,7 +76,7 @@ std::size_t xmlParser::IOHandler::read_(std::string &message)
     return length;
 }
 
-std::size_t xmlParser::IOHandler::write_(const std::string &message)
+std::size_t xmlServer::IOHandler::write_(const std::string &message)
 {
     asio::streambuf sendBuf;
     std::ostream sendStream(&sendBuf);

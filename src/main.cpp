@@ -16,4 +16,5 @@ int main(int argc, char** argv)
 
     xmlServer::XmlService::start("127.0.0.1", portNr);
 
+    return 0;
 }

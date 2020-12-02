@@ -6,18 +6,19 @@ set(BOOST_ROOT)
 set(BOOST_LIBRARYDIR C:/boost/boost_1_74_0/stage/lib)
 set(BOOST_INCLUDEDIR C:/boost/boost_1_74_0/)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD_LIBRARIES "-static-libgcc -static-libstdc++ -lwsock32 -lws2_32 ${CMAKE_CXX_STANDARD_LIBRARIES}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive")
 
 add_executable(XML_GridViewServer
   src/main.cpp
   src/ioHandler.cpp
   src/messageParser.cpp
   src/xmlService.cpp
+  src/xmlParser.cpp
+  src/config.cpp
 )
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_STANDARD_LIBRARIES "-static-libgcc -static-libstdc++ -lwsock32 -lws2_32 ${CMAKE_CXX_STANDARD_LIBRARIES}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive")
 
 target_include_directories(XML_GridViewServer PUBLIC include)
 target_include_directories(XML_GridViewServer PUBLIC include/extern)
