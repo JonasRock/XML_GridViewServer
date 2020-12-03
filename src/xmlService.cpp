@@ -2,13 +2,15 @@
 #include "xmlParser.hpp"
 #include "config.hpp"
 
+#include <string>
+
 void xmlServer::XmlService::start(std::string address, uint32_t port)
 {
     ioHandler_ = std::make_shared<xmlServer::IOHandler>(address, port);
     messageParser_ = std::make_shared<xmlServer::MessageParser>();
-    xmlParser_ = std::make_shared<xmlServer::XmlParser>("testfile");
+    xmlParser_ = std::make_shared<xmlServer::XmlParser>();
 
-    messageParser_->register_request_callback("initialize", xmlServer::XmlService::request_initialize);
+    messageParser_->register_request_callback("init", xmlServer::XmlService::request_init);
     messageParser_->register_notification_callback("shutdown", xmlServer::XmlService::notification_shutdown);
 
     run();
@@ -39,8 +41,8 @@ void xmlServer::XmlService::notification_shutdown(const jsonrpcpp::Parameter &pa
     xmlServer::config::shutdown = true;
 }
 
-jsonrpcpp::response_ptr xmlServer::XmlService::request_initialize(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
+jsonrpcpp::response_ptr xmlServer::XmlService::request_init(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
 {
-    json result = params.to_json();
+    json result = xmlParser_->parse((params.to_json())["uri"].get<std::string>());
     return std::make_shared<jsonrpcpp::Response>(id, result);
 }

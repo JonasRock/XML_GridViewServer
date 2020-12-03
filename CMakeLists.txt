@@ -18,6 +18,7 @@ add_executable(XML_GridViewServer
   src/xmlService.cpp
   src/xmlParser.cpp
   src/config.cpp
+  include/extern/pugixml.cpp
 )
 
 target_include_directories(XML_GridViewServer PUBLIC include)

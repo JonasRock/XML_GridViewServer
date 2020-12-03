@@ -27,7 +27,7 @@ private:
     static inline std::shared_ptr<xmlServer::MessageParser> messageParser_ = nullptr;
     static inline std::shared_ptr<xmlServer::XmlParser> xmlParser_ = nullptr;
 
-    static jsonrpcpp::response_ptr request_initialize(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
+    static jsonrpcpp::response_ptr request_init(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params);
     
     static void notification_shutdown(const jsonrpcpp::Parameter &params);
 };

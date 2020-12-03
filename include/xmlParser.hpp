@@ -2,6 +2,7 @@
 #define XMLPARSER_H
 
 #include <string>
+#include "pugixml.hpp"
 
 namespace xmlServer
 {
@@ -10,7 +11,10 @@ namespace xmlServer
 class XmlParser
 {
 public:
-    XmlParser(std::string filePath);
+    uint32_t parse(const std::string filepath);
+
+private:
+    pugi::xml_document xmlRoot_;
 };
 
 
