@@ -11,7 +11,7 @@ void xmlServer::XmlService::start(std::string address, uint32_t port)
     xmlParser_ = std::make_shared<xmlServer::XmlParser>();
 
     messageParser_->register_request_callback("init", xmlServer::XmlService::request_init);
-    messageParser_->register_notification_callback("shutdown", xmlServer::XmlService::notification_shutdown);
+    messageParser_->register_request_callback("getChildren", xmlServer::XmlService::request_getChildren);
 
     run();
 }
@@ -43,6 +43,14 @@ void xmlServer::XmlService::notification_shutdown(const jsonrpcpp::Parameter &pa
 
 jsonrpcpp::response_ptr xmlServer::XmlService::request_init(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
 {
-    json result = xmlParser_->parse((params.to_json())["uri"].get<std::string>());
+    xmlParser_->parse((params.to_json())["uri"].get<std::string>());
+    json result = 0;
+    return std::make_shared<jsonrpcpp::Response>(id, result);
+}
+
+jsonrpcpp::response_ptr xmlServer::XmlService::request_getChildren(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
+{
+    json jsonParams = params.to_json();
+    json result = xmlParser_->getNodeData(jsonParams["xPath"].get<std::string>());
     return std::make_shared<jsonrpcpp::Response>(id, result);
 }

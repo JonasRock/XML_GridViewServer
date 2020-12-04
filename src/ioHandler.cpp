@@ -57,11 +57,11 @@ void xmlServer::IOHandler::writeAllMessages()
 
 std::size_t xmlServer::IOHandler::read_(std::string &message)
 {
-    while(socket_.available() < 30)
+    static asio::streambuf headerbuf(5000);
+    while(socket_.available() < 5 && !headerbuf.size())
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
-    asio::streambuf headerbuf(5000);
     boost::system::error_code ec;
 
     std::size_t length = asio::read_until(socket_, headerbuf, "\r\n\r\n", ec);

@@ -2,6 +2,8 @@
 #define XMLPARSER_H
 
 #include <string>
+
+#include "json.hpp"
 #include "pugixml.hpp"
 
 namespace xmlServer
@@ -11,7 +13,8 @@ namespace xmlServer
 class XmlParser
 {
 public:
-    uint32_t parse(const std::string filepath);
+    void parse(const std::string filepath);
+    nlohmann::json getNodeData(const std::string xPathExpression);
 
 private:
     pugi::xml_document xmlRoot_;
