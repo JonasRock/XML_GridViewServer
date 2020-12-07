@@ -71,7 +71,8 @@ nlohmann::json xmlServer::XmlParser::getNodeData(std::string xPathExpression)
                         json elementJSON = {
                             {"name", element.name()}, 
                             {"value", ""},
-                            {"hasChildren", element.children().begin() != element.children().end()}
+                            {"hasChildren", element.children().begin() != element.children().end()},
+                            {"fullPath", element.path()}
                         };
                         result["elements"].push_back(elementJSON);
                     }
