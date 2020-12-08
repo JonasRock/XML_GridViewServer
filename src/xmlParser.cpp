@@ -43,6 +43,7 @@ nlohmann::json xmlServer::XmlParser::getNodeData(std::string xPathExpression)
             {"attributes", nullptr},
             {"elements", nullptr}
         };
+        bool isArray = false;
         for(auto xPathRes : xPathResults)
         {
             if(xPathRes)
@@ -55,28 +56,58 @@ nlohmann::json xmlServer::XmlParser::getNodeData(std::string xPathExpression)
                     };
                     result["attributes"].push_back(attributeJSON);
                 }
-                for (auto element : xPathRes.node())
+                if(xPathRes.node().children().begin() != xPathRes.node().children().end())
                 {
-                    if(++element.children().begin() == element.children().end()
-                        && element.first_child().type() == pugi::node_pcdata)
+                    bool hasMultipleElements = xPathRes.node().first_child() != xPathRes.node().last_child();
+                    if (hasMultipleElements)
                     {
-                        json elementJSON = {
-                            {"name", element.name()},
-                            {"value", element.child_value()},
-                            {"hasChildren", false}
-                        };
-                        result["elements"].push_back(elementJSON);
-                    } else
-                    {
-                        json elementJSON = {
-                            {"name", element.name()}, 
-                            {"value", ""},
-                            {"hasChildren", element.children().begin() != element.children().end()},
-                            {"fullPath", element.path()}
-                        };
-                        result["elements"].push_back(elementJSON);
+                        std::string name1 = xPathRes.node().first_child().name();
+                        std::string name2 = xPathRes.node().last_child().name();
+                        if (!name1.compare(name2))
+                        {
+                            //For now just assume its either all the same or all different elements
+                            isArray = true;
+                        }
                     }
-                    
+                    int index = 1;
+                    for (auto element : xPathRes.node())
+                    {
+                        std::string name = element.name();
+                        if (isArray)
+                        {
+                            name += "[" + std::to_string(index++) + "]";
+                        }
+                        //Empty element?
+                        if ((element.first_child().empty()))
+                        {
+                            json elementJSON = {
+                                {"name", name},
+                                {"value", ""},
+                                {"hasChildren", false}
+                            };
+                            result["elements"].push_back(elementJSON);
+                        }
+                        else if ((++element.children().begin() == element.children().end())
+                            && (element.first_child().type() == pugi::node_pcdata))
+                        {
+                            json elementJSON = {
+                                {"name", name},
+                                {"value", element.child_value()},
+                                {"hasChildren", false}
+                            };
+                            result["elements"].push_back(elementJSON);
+                        } 
+                        else
+                        {
+                            json elementJSON = {
+                                {"name", name}, 
+                                {"value", ""},
+                                {"hasChildren", element.empty() ? false : element.children().begin() != element.children().end()},
+                                {"fullPath", !xPathExpression.compare("/") ? xPathExpression + name : xPathExpression + "/" + name}
+                            };
+                            result["elements"].push_back(elementJSON);
+                        }
+                    }
                 }
             }
         }
