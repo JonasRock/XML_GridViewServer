@@ -5,6 +5,8 @@
 #include <string>
 #include <iostream>
 #include <chrono>
+#include <set>
+#include <map>
 
 using namespace nlohmann; //json.hpp
 
@@ -32,90 +34,106 @@ void xmlServer::XmlParser::parse(const std::string uri)
     }
 }
 
-//xPathExpression points to the node whose info we want
-
 nlohmann::json xmlServer::XmlParser::getNodeData(std::string xPathExpression)
 {
-    try 
+    try
     {
-        pugi::xpath_node_set xPathResults = xmlRoot_.select_nodes(xPathExpression.c_str());
         json result = {
             {"attributes", nullptr},
             {"elements", nullptr}
         };
-        bool isArray = false;
-        for(auto xPathRes : xPathResults)
+        pugi::xpath_node_set xPathResults = xmlRoot_.select_nodes(xPathExpression.c_str());
+        if(xPathResults.size() != 1)
         {
-            if(xPathRes)
+            return nullptr;
+        }
+        else
+        {
+            pugi::xpath_node xPathRes = xPathResults.first();
+            
+            //attributes
+            for (auto attribute : xPathRes.node().attributes())
             {
-                for (auto attribute : xPathRes.node().attributes())
+                json attributeJSON = {
+                    {"name", attribute.name()},
+                    {"value", attribute.value()}
+                };
+                result["attributes"].push_back(attributeJSON);
+            }
+
+            //child elements
+            //This works in two iterations.
+            //First we loop over the elements once to determine which elements have duplicates, so are in an Array
+            //Then we loop over again, and add them to the result, including the info for the arrays
+
+            //contains all strings found so far
+            std::set<std::string> foundSet;
+            //contains all duplicates found so far
+            std::map<std::string, uint32_t> duplicateMap;
+
+            for (auto element : xPathRes.node().children())
+            {
+                auto res = foundSet.insert(element.name());
+                if(!res.second)
                 {
-                    json attributeJSON = {
-                        {"name", attribute.name()},
-                        {"value", attribute.value()}
-                    };
-                    result["attributes"].push_back(attributeJSON);
-                }
-                if(xPathRes.node().children().begin() != xPathRes.node().children().end())
-                {
-                    bool hasMultipleElements = xPathRes.node().first_child() != xPathRes.node().last_child();
-                    if (hasMultipleElements)
-                    {
-                        std::string name1 = xPathRes.node().first_child().name();
-                        std::string name2 = xPathRes.node().last_child().name();
-                        if (!name1.compare(name2))
-                        {
-                            //For now just assume its either all the same or all different elements
-                            isArray = true;
-                        }
-                    }
-                    int index = 1;
-                    for (auto element : xPathRes.node())
-                    {
-                        std::string name = element.name();
-                        if (isArray)
-                        {
-                            name += "[" + std::to_string(index++) + "]";
-                        }
-                        //Empty element?
-                        if ((element.first_child().empty()))
-                        {
-                            json elementJSON = {
-                                {"name", name},
-                                {"value", ""},
-                                {"hasChildren", false}
-                            };
-                            result["elements"].push_back(elementJSON);
-                        }
-                        else if ((++element.children().begin() == element.children().end())
-                            && (element.first_child().type() == pugi::node_pcdata))
-                        {
-                            json elementJSON = {
-                                {"name", name},
-                                {"value", element.child_value()},
-                                {"hasChildren", false}
-                            };
-                            result["elements"].push_back(elementJSON);
-                        } 
-                        else
-                        {
-                            json elementJSON = {
-                                {"name", name}, 
-                                {"value", ""},
-                                {"hasChildren", element.empty() ? false : element.children().begin() != element.children().end()},
-                                {"fullPath", !xPathExpression.compare("/") ? xPathExpression + name : xPathExpression + "/" + name}
-                            };
-                            result["elements"].push_back(elementJSON);
-                        }
-                    }
+                    duplicateMap.insert_or_assign(element.name(), 1);
                 }
             }
+            //duplicateMap now only contains elements which occur more than once
+            for (auto element: xPathRes.node().children())
+            {
+                std::string name = element.name();
+                auto duplicateMapElem = duplicateMap.find(name);
+                if(duplicateMapElem != duplicateMap.end())
+                {
+                    //This element has duplicates in this scope, so [x] is needed
+                    name += "[" + std::to_string((duplicateMapElem->second)++) + "]";
+                }
+                
+                //Empty element?
+                if (element.first_child().empty() && element.first_attribute().empty())
+                {
+                    json elementJSON = {
+                        {"name", name},
+                        {"value", nullptr},
+                        {"hasChildren", false}
+                    };
+                    result["elements"].push_back(elementJSON);
+                }
+                //Only a single pcdata element as child? -> show as value
+                else if (element.first_attribute().empty()
+                        && (element.first_child().type() == pugi::node_pcdata)
+                        && (element.first_child().next_sibling().type() == pugi::node_null))
+                {
+                    json elementJSON = {
+                        {"name", name},
+                        {"value", element.child_value()},
+                        {"hasChildren", false}
+                    };
+                    result["elements"].push_back(elementJSON);
+                }
+                //Has at least one attribute or child other than a single pcdata
+                else
+                {
+                    json elementJSON = {
+                        {"name", name},
+                        {"value", ""},
+                        {"hasChildren", true},
+                        //If we are at root level ("/"), we dont want to have "//" after, because this has another meaning in xpath
+                        {"fullPath", !xPathExpression.compare("/")
+                            ? xPathExpression + name
+                            : xPathExpression + "/" + name}
+                    };
+                    result["elements"].push_back(elementJSON);
+                }
+                        
+            }
         }
-        return result;
+        return result; 
     }
-    catch (const pugi::xpath_exception &e)
+    catch(const pugi::xpath_exception &e)
     {
-        std::cout << "XPath error";
+        std::cerr << e.what() << '\n';
         return nullptr;
     }
 }
