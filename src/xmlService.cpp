@@ -51,6 +51,11 @@ jsonrpcpp::response_ptr xmlServer::XmlService::request_init(const jsonrpcpp::Id 
 jsonrpcpp::response_ptr xmlServer::XmlService::request_getChildren(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
 {
     json jsonParams = params.to_json();
-    json result = xmlParser_->getNodeData(jsonParams["xPath"].get<std::string>());
+    bool arxml = false;
+    if (jsonParams["options"]["arxml"].is_boolean())
+    {
+            arxml = jsonParams["options"]["arxml"].get<bool>();
+    }
+    json result = xmlParser_->getNodeData(jsonParams["xPath"].get<std::string>(), arxml);
     return std::make_shared<jsonrpcpp::Response>(id, result);
 }

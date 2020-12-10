@@ -34,7 +34,7 @@ void xmlServer::XmlParser::parse(const std::string uri)
     }
 }
 
-nlohmann::json xmlServer::XmlParser::getNodeData(std::string xPathExpression)
+nlohmann::json xmlServer::XmlParser::getNodeData(std::string xPathExpression, bool arxml)
 {
     try
     {
@@ -117,7 +117,16 @@ nlohmann::json xmlServer::XmlParser::getNodeData(std::string xPathExpression)
                 {
                     json elementJSON = {
                         {"name", name},
-                        {"value", ""},
+                        {"value", !arxml ? "" : element.find_child(
+                            [](pugi::xml_node node){
+                                static const std::string sname = "SHORT-NAME";
+                                if(!sname.compare(node.name()))
+                                {
+                                    return true;
+                                }
+                                return false;
+                            }).child_value()
+                        },
                         {"hasChildren", true},
                         //If we are at root level ("/"), we dont want to have "//" after, because this has another meaning in xpath
                         {"fullPath", !xPathExpression.compare("/")
