@@ -59,3 +59,10 @@ jsonrpcpp::response_ptr xmlServer::XmlService::request_getChildren(const jsonrpc
     json result = xmlParser_->getNodeData(jsonParams["xPath"].get<std::string>(), arxml);
     return std::make_shared<jsonrpcpp::Response>(id, result);
 }
+
+jsonrpcpp::response_ptr xmlServer::XmlService::request_getNodePosition(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
+{
+    json jsonParams = params.to_json();
+    json result = xmlParser_->getNodePosition(jsonParams["xPath"].get<std::string>());
+    return std::make_shared<jsonrpcpp::Response>(id, result);
+}
