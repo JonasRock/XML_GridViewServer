@@ -30,7 +30,7 @@ const std::string helper_sanitizeUri(std::string unsanitized)
     return sanitizedFilePath;
 }
 
-void xmlServer::XmlParser::parse(const std::string uri)
+pugi::xml_parse_result xmlServer::XmlParser::parse(const std::string uri)
 {
     std::cout << "Parsing: " << uri << "\n";
     auto t0 = std::chrono::high_resolution_clock::now();
@@ -44,11 +44,7 @@ void xmlServer::XmlParser::parse(const std::string uri)
     auto t3 = std::chrono::high_resolution_clock::now();
     uint32_t msPugi = std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2).count();
     std::cout << "PugiXML parsing finished: " << msPugi << "ms\n\n";
-    if (result) {
-        return;
-    } else {
-        throw xmlServer::parserErrorException();
-    }
+    return result;
 }
 
 void xmlServer::XmlParser::parseNewlines(const std::string uri)

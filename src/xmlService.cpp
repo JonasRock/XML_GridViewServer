@@ -43,8 +43,15 @@ void xmlServer::XmlService::notification_shutdown(const jsonrpcpp::Parameter &pa
 
 jsonrpcpp::response_ptr xmlServer::XmlService::request_init(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
 {
-    xmlParser_->parse((params.to_json())["uri"].get<std::string>());
-    json result = 0;
+    pugi::xml_parse_result res = xmlParser_->parse((params.to_json())["uri"].get<std::string>());
+    json result = {
+        {"status", res.status == pugi::xml_parse_status::status_ok ? "ok" : "error"}
+    };
+    if (res.status != pugi::xml_parse_status::status_ok)
+    {
+        result["description"] = res.description();
+        result["position"] = xmlParser_->getPositionFromOffset(res.offset);
+    }
     return std::make_shared<jsonrpcpp::Response>(id, result);
 }
 
