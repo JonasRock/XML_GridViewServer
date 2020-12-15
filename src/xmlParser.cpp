@@ -143,7 +143,7 @@ nlohmann::json xmlServer::XmlParser::getNodeData(const std::string uri, std::str
                 {
                     json elementJSON = {
                         {"name", name},
-                        {"value", nullptr},
+                        {"value", element.value()},
                         {"hasChildren", false}
                     };
                     result["elements"].push_back(elementJSON);
