@@ -31,22 +31,27 @@ const std::string helper_sanitizeUri(std::string unsanitized)
     return sanitizedFilePath;
 }
 
-pugi::xml_parse_result xmlServer::XmlParser::parse(const std::string uri)
+bool xmlServer::XmlParser::parse(const std::string uri, pugi::xml_parse_result &res)
 {
-    std::cout << "Parsing: " << uri << "\n";
-    auto t0 = std::chrono::high_resolution_clock::now();
-    parseNewlines(uri, helper_sanitizeUri(uri));
-    auto t1 = std::chrono::high_resolution_clock::now();
-    uint32_t msNewline = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
-    std::cout << "Newline parsing finished: " << msNewline << "ms\n";
+    //Prevent reparsing
+    if(xmlRoots_.count(uri) < 1 && newlineOffsets_.count(uri) < 1)
+    {
+        std::cout << "Parsing: " << uri << "\n";
+        auto t0 = std::chrono::high_resolution_clock::now();
+        parseNewlines(uri, helper_sanitizeUri(uri));
+        auto t1 = std::chrono::high_resolution_clock::now();
+        uint32_t msNewline = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
+        std::cout << "Newline parsing finished: " << msNewline << "ms\n";
 
-    auto t2 = std::chrono::high_resolution_clock::now();
-    xmlRoots_.emplace(uri, pugi::xml_document());
-    pugi::xml_parse_result result = xmlRoots_.at(uri).load_file(helper_sanitizeUri(uri).c_str());
-    auto t3 = std::chrono::high_resolution_clock::now();
-    uint32_t msPugi = std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2).count();
-    std::cout << "PugiXML parsing finished: " << msPugi << "ms\n\n";
-    return result;
+        auto t2 = std::chrono::high_resolution_clock::now();
+        xmlRoots_.emplace(uri, pugi::xml_document());
+        res = xmlRoots_.at(uri).load_file(helper_sanitizeUri(uri).c_str());
+        auto t3 = std::chrono::high_resolution_clock::now();
+        uint32_t msPugi = std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2).count();
+        std::cout << "PugiXML parsing finished: " << msPugi << "ms\n\n";
+        return true;
+    }
+    else return false;
 }
 
 void xmlServer::XmlParser::parseNewlines(const std::string uri, const std::string filepath)

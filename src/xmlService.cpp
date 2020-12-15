@@ -43,16 +43,26 @@ void xmlServer::XmlService::notification_shutdown(const jsonrpcpp::Parameter &pa
 
 jsonrpcpp::response_ptr xmlServer::XmlService::request_init(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)
 {
-    pugi::xml_parse_result res = xmlParser_->parse(params.to_json()["uri"].get<std::string>());
-    json result = {
-        {"status", res.status == pugi::xml_parse_status::status_ok ? "ok" : "error"}
-    };
-    if (res.status != pugi::xml_parse_status::status_ok)
+    pugi::xml_parse_result res;
+    if (xmlParser_->parse(params.to_json()["uri"].get<std::string>(), res))
     {
-        result["description"] = res.description();
-        result["position"] = xmlParser_->getPositionFromOffset(params.to_json()["uri"], res.offset);
+        json result = {
+            {"status", res.status == pugi::xml_parse_status::status_ok ? "ok" : "error"}
+        };
+        if (res.status != pugi::xml_parse_status::status_ok)
+        {
+            result["description"] = res.description();
+            result["position"] = xmlParser_->getPositionFromOffset(params.to_json()["uri"], res.offset);
+        }
+        return std::make_shared<jsonrpcpp::Response>(id, result);
     }
-    return std::make_shared<jsonrpcpp::Response>(id, result);
+    else
+    {
+        json result = {
+            {"status", "ok"}
+        };
+        return std::make_shared<jsonrpcpp::Response>(id, result);
+    }
 }
 
 jsonrpcpp::response_ptr xmlServer::XmlService::request_getChildren(const jsonrpcpp::Id &id, const jsonrpcpp::Parameter &params)

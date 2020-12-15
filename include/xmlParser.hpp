@@ -15,7 +15,7 @@ namespace xmlServer
 class XmlParser
 {
 public:
-    pugi::xml_parse_result parse(const std::string uri);
+    bool parse(const std::string uri, pugi::xml_parse_result &result);
     nlohmann::json getNodeData(const std::string uri, const std::string xPathExpression, bool arxml = false);
     nlohmann::json getNodePosition(const std::string uri, const std::string xPathExpression);
     xmlServer::types::Position getPositionFromOffset(const std::string uri, const uint32_t offset);
