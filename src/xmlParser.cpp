@@ -11,13 +11,14 @@
 
 using namespace nlohmann; //json.hpp
 
-xmlServer::types::Position xmlServer::XmlParser::getPositionFromOffset(const uint32_t offset)
+xmlServer::types::Position xmlServer::XmlParser::getPositionFromOffset(const std::string uri, const uint32_t offset)
 {
+    auto offsets = newlineOffsets_.at(uri);
     xmlServer::types::Position ret;
     ret.line = std::lower_bound(
-        newlineOffsets_.begin(), newlineOffsets_.end(), offset
-    ) - newlineOffsets_.begin() - 1;
-    ret.character = offset - newlineOffsets_[ret.line];
+        offsets.begin(), offsets.end(), offset
+    ) - offsets.begin() - 1;
+    ret.character = offset - offsets[ret.line];
     return ret;
 }
 
@@ -34,46 +35,49 @@ pugi::xml_parse_result xmlServer::XmlParser::parse(const std::string uri)
 {
     std::cout << "Parsing: " << uri << "\n";
     auto t0 = std::chrono::high_resolution_clock::now();
-    parseNewlines(helper_sanitizeUri(uri));
+    parseNewlines(uri, helper_sanitizeUri(uri));
     auto t1 = std::chrono::high_resolution_clock::now();
     uint32_t msNewline = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
     std::cout << "Newline parsing finished: " << msNewline << "ms\n";
 
     auto t2 = std::chrono::high_resolution_clock::now();
-    pugi::xml_parse_result result = xmlRoot_.load_file(helper_sanitizeUri(uri).c_str());
+    xmlRoots_.emplace(uri, pugi::xml_document());
+    pugi::xml_parse_result result = xmlRoots_.at(uri).load_file(helper_sanitizeUri(uri).c_str());
     auto t3 = std::chrono::high_resolution_clock::now();
     uint32_t msPugi = std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2).count();
     std::cout << "PugiXML parsing finished: " << msPugi << "ms\n\n";
     return result;
 }
 
-void xmlServer::XmlParser::parseNewlines(const std::string uri)
+void xmlServer::XmlParser::parseNewlines(const std::string uri, const std::string filepath)
 {
-    boost::iostreams::mapped_file mmap(uri, boost::iostreams::mapped_file::readonly);
+    boost::iostreams::mapped_file mmap(filepath, boost::iostreams::mapped_file::readonly);
     const char *const start = mmap.const_data();
     const char *current = start;
     const char *const end = current + mmap.size();
 
     if(current && current < end)
     {
+        std::vector<uint32_t> offsets;
         uint32_t numLines = std::count(start, end, '\n');
-        newlineOffsets_.reserve(numLines + 1);
-        newlineOffsets_.push_back(0);
+        offsets.reserve(numLines + 1);
+        offsets.push_back(0);
         
         while(current && current < end)
         {
             current = static_cast<const char *>(memchr(current, '\n', end - current));
             if(current)
             {
-                newlineOffsets_.push_back(current-start);
+                offsets.push_back(current-start);
                 ++current;
             }
         }
+        newlineOffsets_.emplace(uri, offsets);
     }
     mmap.close();
 }
 
-nlohmann::json xmlServer::XmlParser::getNodeData(std::string xPathExpression, bool arxml)
+nlohmann::json xmlServer::XmlParser::getNodeData(const std::string uri, std::string xPathExpression, bool arxml)
 {
     try
     {
@@ -81,7 +85,7 @@ nlohmann::json xmlServer::XmlParser::getNodeData(std::string xPathExpression, bo
             {"attributes", nullptr},
             {"elements", nullptr}
         };
-        pugi::xpath_node_set xPathResults = xmlRoot_.select_nodes(xPathExpression.c_str());
+        pugi::xpath_node_set xPathResults = xmlRoots_.at(uri).select_nodes(xPathExpression.c_str());
         if(xPathResults.size() != 1)
         {
             return nullptr;
@@ -186,11 +190,11 @@ nlohmann::json xmlServer::XmlParser::getNodeData(std::string xPathExpression, bo
     }
 }
 
-nlohmann::json xmlServer::XmlParser::getNodePosition(const std::string xPathExpression)
+nlohmann::json xmlServer::XmlParser::getNodePosition(const std::string uri, const std::string xPathExpression)
 {
     try
     {
-        pugi::xpath_node_set xPathResults = xmlRoot_.select_nodes(xPathExpression.c_str());
+        pugi::xpath_node_set xPathResults = xmlRoots_.at(uri).select_nodes(xPathExpression.c_str());
         if(xPathResults.size() != 1)
         {
             return nullptr;
@@ -199,7 +203,7 @@ nlohmann::json xmlServer::XmlParser::getNodePosition(const std::string xPathExpr
         {
             pugi::xpath_node xPathRes = xPathResults.first();
             uint32_t offset = xPathRes.node().offset_debug();
-            json result = getPositionFromOffset(offset);
+            json result = getPositionFromOffset(uri, offset);
             return result;
         }
     }

@@ -15,15 +15,15 @@ namespace xmlServer
 class XmlParser
 {
 public:
-    pugi::xml_parse_result parse(const std::string filepath);
-    nlohmann::json getNodeData(const std::string xPathExpression, bool arxml = false);
-    nlohmann::json getNodePosition(const std::string xPathExpression);
-    xmlServer::types::Position getPositionFromOffset(const uint32_t offset);
+    pugi::xml_parse_result parse(const std::string uri);
+    nlohmann::json getNodeData(const std::string uri, const std::string xPathExpression, bool arxml = false);
+    nlohmann::json getNodePosition(const std::string uri, const std::string xPathExpression);
+    xmlServer::types::Position getPositionFromOffset(const std::string uri, const uint32_t offset);
 
 private:
-    pugi::xml_document xmlRoot_;
-    std::vector<uint32_t> newlineOffsets_;
-    void parseNewlines(const std::string filepath);
+    std::map<std::string, pugi::xml_document> xmlRoots_;
+    std::map<std::string, std::vector<uint32_t>> newlineOffsets_;
+    void parseNewlines(const std::string uri, const std::string filepath);
 };
 
 
