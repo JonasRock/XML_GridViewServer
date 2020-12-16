@@ -12,6 +12,7 @@ void xmlServer::XmlService::start(std::string address, uint32_t port)
 
     messageParser_->register_request_callback("init", xmlServer::XmlService::request_init);
     messageParser_->register_request_callback("getChildren", xmlServer::XmlService::request_getChildren);
+    messageParser_->register_request_callback("getNodePosition", xmlServer::XmlService::request_getNodePosition);
 
     run();
 }
