@@ -144,7 +144,11 @@ nlohmann::json xmlServer::XmlParser::getNodeData(const std::string uri, std::str
                     json elementJSON = {
                         {"name", name},
                         {"value", element.value()},
-                        {"hasChildren", false}
+                        {"hasChildren", false},
+                        {"fullPath", !xPathExpression.compare("/")
+                            ? xPathExpression + name
+                            : xPathExpression + "/" + name
+                        }
                     };
                     result["elements"].push_back(elementJSON);
                 }
@@ -156,7 +160,11 @@ nlohmann::json xmlServer::XmlParser::getNodeData(const std::string uri, std::str
                     json elementJSON = {
                         {"name", name},
                         {"value", element.child_value()},
-                        {"hasChildren", false}
+                        {"hasChildren", false},
+                        {"fullPath", !xPathExpression.compare("/")
+                            ? xPathExpression + name
+                            : xPathExpression + "/" + name
+                        }
                     };
                     result["elements"].push_back(elementJSON);
                 }
