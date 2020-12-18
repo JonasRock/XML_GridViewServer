@@ -58,7 +58,7 @@ void xmlServer::IOHandler::writeAllMessages()
 std::size_t xmlServer::IOHandler::read_(std::string &message)
 {
     static asio::streambuf headerbuf(5000);
-    while(socket_.available() < 5 && !headerbuf.size())
+    while(socket_.available() && !headerbuf.size())
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
