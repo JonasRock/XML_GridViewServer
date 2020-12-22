@@ -13,6 +13,11 @@ using namespace nlohmann; //json.hpp
 
 xmlServer::types::Position xmlServer::XmlParser::getPositionFromOffset(const std::string uri, const uint32_t offset)
 {
+    if(xmlRoots_.count(uri) != 1)
+    {
+        auto res = pugi::xml_parse_result();
+        parse(uri, res);
+    }
     auto offsets = newlineOffsets_.at(uri);
     xmlServer::types::Position ret;
     ret.line = std::lower_bound(
@@ -84,6 +89,11 @@ void xmlServer::XmlParser::parseNewlines(const std::string uri, const std::strin
 
 nlohmann::json xmlServer::XmlParser::getNodeData(const std::string uri, std::string xPathExpression, bool arxml)
 {
+    if(xmlRoots_.count(uri) != 1)
+    {
+        auto res = pugi::xml_parse_result();
+        parse(uri, res);
+    }
     try
     {
         json result = {
@@ -205,6 +215,11 @@ nlohmann::json xmlServer::XmlParser::getNodeData(const std::string uri, std::str
 
 nlohmann::json xmlServer::XmlParser::getNodePosition(const std::string uri, const std::string xPathExpression)
 {
+    if(xmlRoots_.count(uri) != 1)
+    {
+        auto res = pugi::xml_parse_result();
+        parse(uri, res);
+    }
     try
     {
         pugi::xpath_node_set xPathResults = xmlRoots_.at(uri).select_nodes(xPathExpression.c_str());
