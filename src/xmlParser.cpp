@@ -7,7 +7,8 @@
 #include <chrono>
 #include <set>
 #include <map>
-#include <boost/iostreams/device/mapped_file.hpp>
+#include "boost/iostreams/device/mapped_file.hpp"
+#include "boost/filesystem.hpp"
 
 using namespace nlohmann; //json.hpp
 
@@ -61,30 +62,33 @@ bool xmlServer::XmlParser::parse(const std::string uri, pugi::xml_parse_result &
 
 void xmlServer::XmlParser::parseNewlines(const std::string uri, const std::string filepath)
 {
-    boost::iostreams::mapped_file mmap(filepath, boost::iostreams::mapped_file::readonly);
-    const char *const start = mmap.const_data();
-    const char *current = start;
-    const char *const end = current + mmap.size();
-
-    if(current && current < end)
+    if(boost::filesystem::file_size(boost::filesystem::path(filepath)))
     {
-        std::vector<uint32_t> offsets;
-        uint32_t numLines = std::count(start, end, '\n');
-        offsets.reserve(numLines + 1);
-        offsets.push_back(0);
-        
-        while(current && current < end)
+        boost::iostreams::mapped_file mmap(filepath, boost::iostreams::mapped_file::readonly);
+        const char *const start = mmap.const_data();
+        const char *current = start;
+        const char *const end = current + mmap.size();
+
+        if(current && current < end)
         {
-            current = static_cast<const char *>(memchr(current, '\n', end - current));
-            if(current)
+            std::vector<uint32_t> offsets;
+            uint32_t numLines = std::count(start, end, '\n');
+            offsets.reserve(numLines + 1);
+            offsets.push_back(0);
+            
+            while(current && current < end)
             {
-                offsets.push_back(current-start);
-                ++current;
+                current = static_cast<const char *>(memchr(current, '\n', end - current));
+                if(current)
+                {
+                    offsets.push_back(current-start);
+                    ++current;
+                }
             }
+            newlineOffsets_.emplace(uri, offsets);
         }
-        newlineOffsets_.emplace(uri, offsets);
+        mmap.close();
     }
-    mmap.close();
 }
 
 nlohmann::json xmlServer::XmlParser::getNodeData(const std::string uri, std::string xPathExpression, bool arxml)

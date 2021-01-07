@@ -50,7 +50,17 @@ jsonrpcpp::response_ptr xmlServer::XmlService::request_init(const jsonrpcpp::Id 
         json result = {
             {"status", res.status == pugi::xml_parse_status::status_ok ? "ok" : "error"}
         };
-        if (res.status != pugi::xml_parse_status::status_ok)
+        //Empty document
+        if (res.status == pugi::xml_parse_status::status_no_document_element)
+        {
+            result["description"] = res.description();
+            xmlServer::types::Position pos = {
+                0, 0
+            };
+            result["position"] = pos;
+        }
+        //Other error
+        else if (res.status != pugi::xml_parse_status::status_ok)
         {
             result["description"] = res.description();
             result["position"] = xmlParser_->getPositionFromOffset(params.to_json()["uri"], res.offset);

@@ -14,6 +14,9 @@ xmlServer::IOHandler::IOHandler(const std::string &address, uint32_t port)
     : ioc_(), endpoint_(asio::ip::address::from_string(address), port), socket_(ioc_, endpoint_.protocol())
 {
     std::cout << "Connecting to " << address << ":" << port << "...\n";
+    //The server crashed when the receive buffer was full, but 8 times the default should be more than sufficient
+    boost::asio::socket_base::receive_buffer_size option(524288); //8 time the default 65536
+    socket_.set_option(option);
     socket_.connect(endpoint_);
     std::cout << "Connection established\n";
 }
