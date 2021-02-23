@@ -18,7 +18,7 @@ jobs:
   - task: CopyFiles@2
     inputs:
       sourceFolder: '$(Build.SourcesDirectory)/build'
-      contents: 'ARXML_LanguageServer'
+      contents: 'XML_GridViewServer'
       targetFolder: '$(Build.ArtifactStagingDirectory)'
   
   - task: PublishBuildArtifacts@1
