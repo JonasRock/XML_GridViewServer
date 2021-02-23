@@ -38,7 +38,7 @@ void xmlServer::XmlService::run()
     }
 }
 
-void xmlServer::XmlService::notification_shutdown(const jsonrpcpp::Parameter &params __attribute__((unused))) {
+void xmlServer::XmlService::notification_shutdown([[maybe_unused]] const jsonrpcpp::Parameter &params) {
     xmlServer::config::shutdown = true;
 }
 
