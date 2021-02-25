@@ -15,7 +15,7 @@ add_executable(XML_GridViewServer
 )
 
 if(MSVC)
-    target_compile_options(XML_GridViewServer PUBLIC /std:c++17 /nr:false /o2)
+    target_compile_options(XML_GridViewServer PUBLIC /std:c++17 /D_WIN32_WINNT=0x0A00)
 elseif(CMAKE_COMPILER_IS_GNUCXX)
     target_compile_options(XML_GridViewServer PUBLIC -static -Wall -Wextra)
 endif()
